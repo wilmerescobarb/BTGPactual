@@ -21,4 +21,6 @@ public class Customer {
     private ObjectId id;
     private String username;
     private BigDecimal amount;
+    private String email;
+    private String cellphone;
 }

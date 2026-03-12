@@ -14,4 +14,8 @@ public class CustomerInvestmentRequest {
     private String investment;
 
     private BigDecimal amount;
+
+    private boolean notificationSms;
+
+    private boolean notificationEmail;
 }

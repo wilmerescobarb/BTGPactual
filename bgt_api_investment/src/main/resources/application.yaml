@@ -15,6 +15,10 @@ jwt:
   # Debe coincidir exactamente con el secret de bgt_api_auth
   secret: bgt-super-secret-key-for-jwt-signing-2026
 
+notification:
+  service:
+    url: http://localhost:8083
+
 logging:
   level:
     com.ceiba.bgt_api_investment: INFO

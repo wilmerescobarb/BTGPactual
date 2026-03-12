@@ -39,6 +39,7 @@ public class CustomerInvestmentService {
     private final InvestmentRepository investmentRepository;
     private final CustomerInvestmentRepository customerInvestmentRepository;
     private final ReactiveMongoTemplate mongoTemplate;
+    private final NotificationWebClient notificationWebClient;
 
     /**
      * Actualiza solo el campo "amount" del customer sin reemplazar el documento completo,
@@ -125,7 +126,9 @@ public class CustomerInvestmentService {
                 );
     }
 
-    public Mono<CustomerInvestmentResponse> subscribe(String username, CustomerInvestmentRequest request) {
+    public Mono<CustomerInvestmentResponse> subscribe(String username,
+                                                       CustomerInvestmentRequest request,
+                                                       String authToken) {
 
         LocalDateTime openedAt = LocalDateTime.now();
 
@@ -160,7 +163,9 @@ public class CustomerInvestmentService {
                                             .build();
                                     return updateCustomerAmount(customer.getId().toString(), newBalance)
                                             .then(customerInvestmentRepository.save(entity))
-                                            .map(CustomerInvestmentResponse::from);
+                                            .flatMap(saved -> notificationWebClient
+                                                    .sendNotifications(customer, request, authToken, openedAt)
+                                                    .thenReturn(CustomerInvestmentResponse.from(saved)));
                                 })
                 );
     }
