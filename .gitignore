@@ -1,0 +1,42 @@
+# ===== Gradle =====
+**/.gradle/
+**/build/
+!**/gradle/wrapper/gradle-wrapper.jar
+!**/gradle/wrapper/gradle-wrapper.properties
+
+# ===== IDE =====
+.idea/
+**/*.iml
+*.ipr
+*.iws
+.vscode/
+**/.settings/
+**/.project
+**/.classpath
+*.code-workspace
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Java / Spring Boot =====
+**/*.class
+*.jar
+*.war
+*.ear
+**/*.log
+hs_err_pid*
+
+# ===== Node / Frontend =====
+**/node_modules/
+**/dist/
+.env
+.env.local
+
+# ===== Misc =====
+*.swp
+*.swo
+*~
+out/
+target/
