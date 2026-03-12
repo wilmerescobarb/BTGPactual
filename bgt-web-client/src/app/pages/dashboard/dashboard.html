@@ -1,0 +1,43 @@
+<div class="dashboard-layout">
+  <!-- Sidebar / Navbar -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <span class="logo-icon">📈</span>
+      <span class="logo-text">BTG Pactual</span>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ auth.currentUsername()?.charAt(0)?.toUpperCase() }}</div>
+      <div class="user-info">
+        <span class="user-name">{{ auth.currentUsername() }}</span>
+        <span class="user-role">Cliente</span>
+      </div>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li>
+        <a routerLink="/dashboard/catalog" routerLinkActive="active">
+          <span class="nav-icon">🏦</span>
+          Fondos de Inversión
+        </a>
+      </li>
+      <li>
+        <a routerLink="/dashboard/history" routerLinkActive="active">
+          <span class="nav-icon">📋</span>
+          Mi Historial
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="logout()">
+        <span>🚪</span> Cerrar Sesión
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>

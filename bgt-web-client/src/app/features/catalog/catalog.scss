@@ -1,0 +1,48 @@
+.fund-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  &.cat-fpv {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  &.cat-fic {
+    background: #d1fae5;
+    color: #065f46;
+  }
+}
+
+.fund-info-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+
+  .fund-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .label {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+  }
+}

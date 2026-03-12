@@ -1,0 +1,140 @@
+<div class="page-header">
+  <div>
+    <h1>Fondos de Inversión</h1>
+    <p>Explora los fondos disponibles y suscríbete al que más te convenga</p>
+  </div>
+  <button class="btn btn-secondary" (click)="loadCatalog()">🔄 Actualizar</button>
+</div>
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="loading-container">
+    <div class="spinner-large"></div>
+    <p>Cargando catálogo...</p>
+  </div>
+}
+
+<!-- Error -->
+@if (error()) {
+  <div class="alert alert-error">
+    {{ error() }}
+    <button (click)="loadCatalog()">Reintentar</button>
+  </div>
+}
+
+<!-- Table -->
+@if (!loading() && !error()) {
+  <div class="card">
+    <div class="card-header">
+      <h2>Catálogo de Fondos <span class="badge">{{ investments().length }}</span></h2>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre del Fondo</th>
+            <th>Categoría</th>
+            <th>Monto Mínimo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (inv of investments(); track inv.id) {
+            <tr>
+              <td>
+                <div class="fund-name">
+                  <span class="fund-icon">🏦</span>
+                  <span>{{ inv.name }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="category-badge" [class]="'cat-' + inv.category.toLowerCase()">
+                  {{ getCategoryLabel(inv.category) }}
+                </span>
+              </td>
+              <td class="amount">
+                {{ inv.minAmount | currency:'COP':'symbol-narrow':'1.0-0' }}
+              </td>
+              <td>
+                <button class="btn btn-primary btn-sm" (click)="openSubscribeModal(inv)">
+                  ➕ Suscribirse
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-row">No hay fondos disponibles.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<!-- Subscribe Modal -->
+@if (showModal()) {
+  <div class="modal-overlay" (click)="closeModal()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Suscribirse al Fondo</h3>
+        <button class="modal-close" (click)="closeModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (subscribeSuccess()) {
+          <div class="alert alert-success">
+            ✅ {{ subscribeSuccess() }}
+          </div>
+          <div style="text-align:center; margin-top: 16px;">
+            <button class="btn btn-secondary" (click)="closeModal()">Cerrar</button>
+          </div>
+        } @else {
+          <div class="fund-info-box">
+            <div class="fund-info-row">
+              <span class="label">Fondo:</span>
+              <strong>{{ selectedInvestment()?.name }}</strong>
+            </div>
+            <div class="fund-info-row">
+              <span class="label">Categoría:</span>
+              <span>{{ getCategoryLabel(selectedInvestment()?.category ?? '') }}</span>
+            </div>
+            <div class="fund-info-row">
+              <span class="label">Monto mínimo:</span>
+              <span class="amount">{{ selectedInvestment()?.minAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="subscribeAmount">Monto a invertir (COP)</label>
+            <input
+              id="subscribeAmount"
+              type="number"
+              [ngModel]="subscribeAmount()"
+              (ngModelChange)="subscribeAmount.set($event)"
+              [min]="selectedInvestment()?.minAmount ?? 0"
+              placeholder="Ingresa el monto"
+            />
+            <span class="form-hint">Mínimo: {{ selectedInvestment()?.minAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+
+          @if (subscribeError()) {
+            <div class="alert alert-error">{{ subscribeError() }}</div>
+          }
+
+          <div class="modal-actions">
+            <button class="btn btn-secondary" (click)="closeModal()" [disabled]="subscribing()">Cancelar</button>
+            <button class="btn btn-primary" (click)="onSubscribe()" [disabled]="subscribing()">
+              @if (subscribing()) {
+                <span class="spinner"></span> Procesando...
+              } @else {
+                Confirmar Suscripción
+              }
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

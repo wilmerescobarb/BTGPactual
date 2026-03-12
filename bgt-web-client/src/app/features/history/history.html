@@ -1,0 +1,144 @@
+<div class="page-header">
+  <div>
+    <h1>Mi Historial de Inversiones</h1>
+    <p>Gestiona tus fondos activos y consulta tu historial de suscripciones</p>
+  </div>
+  <button class="btn btn-secondary" (click)="loadHistory()">🔄 Actualizar</button>
+</div>
+
+<!-- Feedback messages -->
+@if (successMsg()) {
+  <div class="alert alert-success">{{ successMsg() }}</div>
+}
+@if (errorMsg()) {
+  <div class="alert alert-error">{{ errorMsg() }}</div>
+}
+
+<!-- Loading -->
+@if (loading()) {
+  <div class="loading-container">
+    <div class="spinner-large"></div>
+    <p>Cargando historial...</p>
+  </div>
+}
+
+<!-- Error -->
+@if (error()) {
+  <div class="alert alert-error">
+    {{ error() }}
+    <button (click)="loadHistory()">Reintentar</button>
+  </div>
+}
+
+<!-- Table -->
+@if (!loading() && !error()) {
+  <div class="card">
+    <div class="card-header">
+      <h2>Mis Fondos <span class="badge">{{ investments().length }}</span></h2>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Fondo</th>
+            <th>Fecha Apertura</th>
+            <th>Fecha Cierre</th>
+            <th>Monto Invertido</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (inv of pagedInvestments(); track inv.idCustomerInvestment) {
+            <tr [class.row-cancelled]="inv.status === 'C'">
+              <td>
+                <div class="fund-name">
+                  <span class="fund-icon">🏦</span>
+                  <span>{{ inv.nameInvestment }}</span>
+                </div>
+              </td>
+              <td>{{ inv.openedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>{{ inv.closedAt ? (inv.closedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+              <td class="amount">{{ inv.investmentAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(inv.status)">
+                  {{ getStatusLabel(inv.status) }}
+                </span>
+              </td>
+              <td>
+                @if (isActive(inv.status)) {
+                  <button
+                    class="btn btn-danger btn-sm"
+                    (click)="openConfirm(inv)"
+                    [disabled]="unsubscribingId() === inv.idCustomerInvestment"
+                  >
+                    @if (unsubscribingId() === inv.idCustomerInvestment) {
+                      <span class="spinner"></span>
+                    } @else {
+                      Cancelar
+                    }
+                  </button>
+                } @else {
+                  <span class="text-muted">—</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-row">No tienes inversiones registradas.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <div class="pagination-info">
+        @if (totalPages() > 1) {
+          Mostrando {{ (currentPage() - 1) * pageSize + 1 }}–{{ pageEnd() }} de {{ investments().length }} registros
+        } @else {
+          {{ investments().length }} registros en total
+        }
+      </div>
+      @if (totalPages() > 1) {
+        <div class="pagination-controls">
+          <button class="page-btn" (click)="goToPage(1)" [disabled]="currentPage() === 1" title="Primera">«</button>
+          <button class="page-btn" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1" title="Anterior">‹</button>
+          @for (page of pages(); track page) {
+            <button
+              class="page-btn"
+              [class.active]="page === currentPage()"
+              (click)="goToPage(page)"
+            >{{ page }}</button>
+          }
+          <button class="page-btn" (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()" title="Siguiente">›</button>
+          <button class="page-btn" (click)="goToPage(totalPages())" [disabled]="currentPage() === totalPages()" title="Última">»</button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Confirm Unsubscribe Modal -->
+@if (showConfirmModal()) {
+  <div class="modal-overlay" (click)="closeConfirm()">
+    <div class="modal modal-sm" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Confirmar Cancelación</h3>
+        <button class="modal-close" (click)="closeConfirm()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>¿Estás seguro que deseas cancelar la suscripción al fondo:</p>
+        <div class="confirm-fund-name">{{ confirmTarget()?.nameInvestment }}</div>
+        <p class="confirm-warn">Esta acción no se puede deshacer.</p>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeConfirm()">No, volver</button>
+          <button class="btn btn-danger" (click)="confirmUnsubscribe()">Sí, cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

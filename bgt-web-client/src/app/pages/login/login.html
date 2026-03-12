@@ -1,0 +1,54 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo">
+        <span class="logo-icon">📈</span>
+        <span class="logo-text">BTG Pactual</span>
+      </div>
+      <h2>Iniciar Sesión</h2>
+      <p>Bienvenido al portal de inversiones</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input
+          id="username"
+          type="text"
+          [(ngModel)]="username"
+          name="username"
+          placeholder="Ingresa tu usuario"
+          required
+          autocomplete="username"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="Ingresa tu contraseña"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      @if (errorMsg()) {
+        <div class="alert alert-error">
+          {{ errorMsg() }}
+        </div>
+      }
+
+      <button type="submit" class="btn btn-primary btn-full" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner"></span> Autenticando...
+        } @else {
+          Ingresar
+        }
+      </button>
+    </form>
+  </div>
+</div>
