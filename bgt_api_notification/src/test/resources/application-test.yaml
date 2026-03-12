@@ -1,8 +1,6 @@
 spring:
   application:
     name: bgt_api_notification
-
-spring:
   mail:
     host: localhost
     port: 3025
@@ -17,3 +15,6 @@ aws:
   access-key: test-access-key
   secret-key: test-secret-key
   region: us-east-1
+
+jwt:
+  secret: bgt-super-secret-key-for-jwt-signing-2026

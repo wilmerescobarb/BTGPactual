@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 public class NotificationResponse {
 
     private String messageId;
-    private String subscriptionArn;
     private String status;
     private String detail;
 }

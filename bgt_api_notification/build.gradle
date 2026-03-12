@@ -27,12 +27,23 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	// JWT (misma versión que bgt_api_auth y bgt_api_investment)
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly   'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly   'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
 	// Email (JavaMailSender)
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 	// AWS SDK v2 - SNS para SMS
 	implementation platform('software.amazon.awssdk:bom:2.25.0')
 	implementation 'software.amazon.awssdk:sns'
+
+	// Validation (Bean Validation / JSR-303)
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 
 	// Lombok
 	compileOnly 'org.projectlombok:lombok'
@@ -41,6 +52,7 @@ dependencies {
 	// Test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

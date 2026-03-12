@@ -23,6 +23,10 @@ aws:
   secret-key: AVunCWzc0QmJ+51IsRxCTDPt8RAuAOzWTz3kFH03
   region: us-east-1
 
+jwt:
+  # Debe coincidir exactamente con el secret de bgt_api_auth
+  secret: bgt-super-secret-key-for-jwt-signing-2026
+
 logging:
   level:
     com.ceiba.bgt_api_notification: INFO
