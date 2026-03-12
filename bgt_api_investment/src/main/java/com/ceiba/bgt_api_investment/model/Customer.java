@@ -1,21 +1,24 @@
 package com.ceiba.bgt_api_investment.model;
 
 import lombok.Data;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
 
 /**
- * Entidad que mapea la tabla "customer" en PostgreSQL.
+ * Entidad que mapea la colección "customer" en MongoDB.
  * Solo se exponen los campos necesarios para este microservicio.
  */
 @Data
-@Table("customer")
+@Document("customer")
 public class Customer {
 
     @Id
-    private Integer id;
+    @Field("_id")
+    private ObjectId id;
     private String username;
     private BigDecimal amount;
 }

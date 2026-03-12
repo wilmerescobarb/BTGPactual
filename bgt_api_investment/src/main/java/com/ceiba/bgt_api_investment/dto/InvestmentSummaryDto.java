@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @Data
 public class InvestmentSummaryDto {
 
-    private Integer idCustomerInvestment;
-    private Integer idInvestment;
+    private String idCustomerInvestment;
+    private String idInvestment;
     private String nameInvestment;
     private LocalDateTime openedAt;
     private LocalDateTime closedAt;
@@ -25,7 +25,7 @@ public class InvestmentSummaryDto {
     public static InvestmentSummaryDto from(CustomerInvestment ci, Investment investment) {
         InvestmentSummaryDto dto = new InvestmentSummaryDto();
         dto.setIdCustomerInvestment(ci.getId());
-        dto.setIdInvestment(ci.getIdInvestment());
+        dto.setIdInvestment(ci.getIdInvestment() != null ? ci.getIdInvestment().toHexString() : null);
         dto.setNameInvestment(investment.getName());
         dto.setOpenedAt(ci.getOpenedAt());
         dto.setClosedAt(ci.getClosedAt());

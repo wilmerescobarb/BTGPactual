@@ -13,7 +13,7 @@ server:
 
 jwt:
   # Clave secreta para firmar JWTs (mínimo 32 caracteres para HS256)
-  secret: bgt-super-secret-key-for-jwt-signing-2024
+  secret: bgt-super-secret-key-for-jwt-signing-2026
   # Tiempo de expiración del token en milisegundos (1 hora = 3600000)
   expiration-ms: 3600000
 

@@ -3,11 +3,17 @@ package com.ceiba.bgt_api_investment.service;
 import com.ceiba.bgt_api_investment.dto.CustomerInvestmentDto;
 import com.ceiba.bgt_api_investment.dto.InvestmentSummaryDto;
 import com.ceiba.bgt_api_investment.exception.BusinessException;
+import com.ceiba.bgt_api_investment.model.Customer;
 import com.ceiba.bgt_api_investment.model.CustomerInvestment;
 import com.ceiba.bgt_api_investment.repository.CustomerInvestmentRepository;
 import com.ceiba.bgt_api_investment.repository.CustomerRepository;
 import com.ceiba.bgt_api_investment.repository.InvestmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -25,12 +31,36 @@ public class CustomerInvestmentService {
     private final CustomerRepository customerRepository;
     private final InvestmentRepository investmentRepository;
     private final CustomerInvestmentRepository customerInvestmentRepository;
+    private final ReactiveMongoTemplate mongoTemplate;
 
-    public Flux<InvestmentSummaryDto> getInvestments(String username) {
-        return customerInvestmentRepository.findInvestmentsByUsername(username);
+    /**
+     * Actualiza solo el campo "amount" del customer sin reemplazar el documento completo,
+     * evitando que el JSON Schema validator rechace el update por campos faltantes.
+     */
+    private Mono<Void> updateCustomerAmount(String customerId, BigDecimal newAmount) {
+        Query query = new Query(Criteria.where("_id").is(customerId));
+        Update update = new Update().set("amount", newAmount);
+        return mongoTemplate.updateFirst(query, update, Customer.class).then();
     }
 
-    public Mono<CustomerInvestmentDto> unsubscribe(String username, Integer idCustomerInvestment) {
+    /**
+     * Obtiene las inversiones del cliente buscando sus CustomerInvestments
+     * y enriqueciendo con el nombre del fondo (sin JOIN, approach MongoDB).
+     */
+    public Flux<InvestmentSummaryDto> getInvestments(String username) {
+        return customerRepository.findByUsername(username)
+                .switchIfEmpty(Mono.error(new IllegalArgumentException(
+                        "Cliente con el usuario: " + username + " no existe")))
+                .flatMapMany(customer ->
+                        customerInvestmentRepository.findByIdCustomer(customer.getId())
+                                .flatMap(ci ->
+                                        investmentRepository.findById(ci.getIdInvestment().toString())
+                                                .map(investment -> InvestmentSummaryDto.from(ci, investment))
+                                )
+                );
+    }
+
+    public Mono<CustomerInvestmentDto> unsubscribe(String username, String idCustomerInvestment) {
 
         return customerRepository.findByUsername(username)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
@@ -54,22 +84,14 @@ public class CustomerInvestmentService {
                                     }
 
                                     // Devolver el invested_amount al saldo del customer
-                                    BigDecimal newBalance = customer.getAmount().add(ci.getInvestedAmount());
                                     LocalDateTime closedAt = LocalDateTime.now();
+                                    BigDecimal newBalance = customer.getAmount().add(ci.getInvestedAmount());
+                                    ci.setStatus("C");
+                                    ci.setClosedAt(closedAt);
 
-                                    return customerRepository.updateAmount(customer.getId(), newBalance)
-                                            .flatMap(updated ->
-                                                    customerInvestmentRepository.updateStatus(ci.getId(), "C", closedAt)
-                                                            .map(rows -> CustomerInvestmentDto.from(
-                                                                    CustomerInvestment.builder()
-                                                                            .id(ci.getId())
-                                                                            .idCustomer(ci.getIdCustomer())
-                                                                            .idInvestment(ci.getIdInvestment())
-                                                                            .openedAt(ci.getOpenedAt())
-                                                                            .closedAt(closedAt)
-                                                                            .investedAmount(ci.getInvestedAmount())
-                                                                            .status("C")
-                                                                            .build())));
+                                    return updateCustomerAmount(customer.getId().toString(), newBalance)
+                                            .then(customerInvestmentRepository.save(ci))
+                                            .map(saved -> CustomerInvestmentDto.from(saved));
                                 })
                 );
     }
@@ -80,7 +102,7 @@ public class CustomerInvestmentService {
 
         return customerRepository.findByUsername(username)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
-                        "Cliente con el usuario: " + username+" no existe")))
+                        "Cliente con el usuario: " + username + " no existe")))
                 .flatMap(customer ->
                         investmentRepository.findById(request.getInvestment())
                                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
@@ -101,20 +123,17 @@ public class CustomerInvestmentService {
                                                         + investment.getName()));
                                     }
 
-                                    // Descontar el monto del saldo del customer
-                                    return customerRepository.updateAmount(customer.getId(), newBalance)
-                                            .flatMap(updated -> {
-                                                CustomerInvestment entity = CustomerInvestment.builder()
-                                                        .idCustomer(customer.getId())
-                                                        .idInvestment(investment.getId())
-                                                        .openedAt(openedAt)
-                                                        .investedAmount(request.getAmount())
-                                                        .status("A")
-                                                        .build();
-
-                                                return customerInvestmentRepository.save(entity)
-                                                        .map(CustomerInvestmentDto::from);
-                                            });
+                                    customer.setAmount(newBalance);
+                                    CustomerInvestment entity = CustomerInvestment.builder()
+                                            .idCustomer(customer.getId())
+                                            .idInvestment(investment.getId())
+                                            .openedAt(openedAt)
+                                            .investedAmount(request.getAmount())
+                                            .status("A")
+                                            .build();
+                                    return updateCustomerAmount(customer.getId().toString(), newBalance)
+                                            .then(customerInvestmentRepository.save(entity))
+                                            .map(CustomerInvestmentDto::from);
                                 })
                 );
     }

@@ -1,25 +1,26 @@
 package com.ceiba.bgt_api_investment.model;
 
 import lombok.Data;
+import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
 
 /**
- * Entidad que mapea la tabla "investment" en PostgreSQL.
+ * Entidad que mapea la colección "investment" en MongoDB.
  */
 @Data
-@Table("investment")
+@Document("investment")
 public class Investment {
 
     @Id
-    private Integer id;
+    private ObjectId id;
 
     private String name;
 
-    @Column("min_amount")
+    @Field("min_amount")
     private BigDecimal minAmount;
 
     private String category;

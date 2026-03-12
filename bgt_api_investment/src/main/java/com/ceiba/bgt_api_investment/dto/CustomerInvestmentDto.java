@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Data
 public class CustomerInvestmentDto {
 
-    private Integer investment;
+    private String investment;
 
     private BigDecimal amount;
 
@@ -25,7 +25,7 @@ public class CustomerInvestmentDto {
 
     public static CustomerInvestmentDto from(CustomerInvestment entity) {
         CustomerInvestmentDto dto = new CustomerInvestmentDto();
-        dto.setInvestment(entity.getIdInvestment());
+        dto.setInvestment(entity.getIdInvestment() != null ? entity.getIdInvestment().toHexString() : null);
         dto.setAmount(entity.getInvestedAmount());
         dto.setOpenedAt(entity.getOpenedAt());
         dto.setClosedAt(entity.getClosedAt());

@@ -61,7 +61,7 @@ public class InvestmentController {
     @PutMapping("/unsubscribe/{id_customer_investment}")
     public Mono<ResponseEntity<ApiResponse<CustomerInvestmentDto>>> unsubscribe(
             @AuthenticationPrincipal String username,
-            @PathVariable("id_customer_investment") Integer idCustomerInvestment) {
+            @PathVariable("id_customer_investment") String idCustomerInvestment) {
         return customerInvestmentService.unsubscribe(username, idCustomerInvestment)
                 .map(dto -> ResponseEntity
                         .ok(new ApiResponse<>("Suscripción cancelada exitosamente", dto)));
