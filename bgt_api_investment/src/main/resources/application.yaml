@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: bgt_api_investment
+
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/bgt_db
+    username: postgres
+    password: postgres1
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 10
+      max-idle-time: 30m
+
+server:
+  port: 8082
+
+jwt:
+  # Debe coincidir exactamente con el secret de bgt_api_auth
+  secret: bgt-super-secret-key-for-jwt-signing-2024
