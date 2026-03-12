@@ -119,6 +119,26 @@
             <span class="form-hint">Mínimo: {{ selectedInvestment()?.minAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
           </div>
 
+          <div class="notification-group">
+            <span class="notification-label">Notificar vía</span>
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [ngModel]="notificationEmail()"
+                (ngModelChange)="notificationEmail.set($event)"
+              />
+              Email
+            </label>
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [ngModel]="notificationSms()"
+                (ngModelChange)="notificationSms.set($event)"
+              />
+              SMS
+            </label>
+          </div>
+
           @if (subscribeError()) {
             <div class="alert alert-error">{{ subscribeError() }}</div>
           }

@@ -22,6 +22,8 @@ export class CatalogComponent implements OnInit {
   showModal = signal(false);
   selectedInvestment = signal<InvestmentDto | null>(null);
   subscribeAmount = signal(0);
+  notificationEmail = signal(false);
+  notificationSms = signal(false);
   subscribing = signal(false);
   subscribeSuccess = signal('');
   subscribeError = signal('');
@@ -48,6 +50,8 @@ export class CatalogComponent implements OnInit {
   openSubscribeModal(investment: InvestmentDto): void {
     this.selectedInvestment.set(investment);
     this.subscribeAmount.set(investment.minAmount);
+    this.notificationEmail.set(false);
+    this.notificationSms.set(false);
     this.subscribeSuccess.set('');
     this.subscribeError.set('');
     this.showModal.set(true);
@@ -71,6 +75,8 @@ export class CatalogComponent implements OnInit {
     const request: CustomerInvestmentRequest = {
       investment: inv.id,
       amount: amount,
+      notificationEmail: this.notificationEmail(),
+      notificationSms: this.notificationSms(),
     };
 
     this.subscribing.set(true);

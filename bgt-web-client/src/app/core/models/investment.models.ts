@@ -18,6 +18,8 @@ export interface InvestmentSummaryDto {
 export interface CustomerInvestmentRequest {
   investment: string;
   amount: number;
+  notificationEmail: boolean;
+  notificationSms: boolean;
 }
 
 export interface CustomerInvestmentResponse {
