@@ -1,0 +1,5 @@
+# Perfil de desarrollo - activa logging detallado
+# Usar con: --spring.profiles.active=dev
+logging:
+  level:
+    com.ceiba.bgt_api_investment: DEBUG

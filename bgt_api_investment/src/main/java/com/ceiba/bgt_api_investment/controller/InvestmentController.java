@@ -1,7 +1,9 @@
 package com.ceiba.bgt_api_investment.controller;
 
+import com.ceiba.bgt_api_investment.constant.ResponseMessages;
 import com.ceiba.bgt_api_investment.dto.ApiResponse;
-import com.ceiba.bgt_api_investment.dto.CustomerInvestmentDto;
+import com.ceiba.bgt_api_investment.dto.CustomerInvestmentRequest;
+import com.ceiba.bgt_api_investment.dto.CustomerInvestmentResponse;
 import com.ceiba.bgt_api_investment.dto.InvestmentSummaryDto;
 import com.ceiba.bgt_api_investment.service.CustomerInvestmentService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Controlador para el API de inversiones.
@@ -33,37 +34,31 @@ public class InvestmentController {
 
     private final CustomerInvestmentService customerInvestmentService;
 
-    @GetMapping("/me")
-    public Mono<Map<String, String>> getCurrentCustomer(
-            @AuthenticationPrincipal String username) {
-        return Mono.just(Map.of("authenticatedAs", username));
-    }
-
     @GetMapping
     public Mono<ResponseEntity<ApiResponse<List<InvestmentSummaryDto>>>> getInvestments(
             @AuthenticationPrincipal String username) {
         return customerInvestmentService.getInvestments(username)
                 .collectList()
                 .map(list -> ResponseEntity.ok(
-                        new ApiResponse<>("Inversiones del cliente", list)));
+                        new ApiResponse<>(ResponseMessages.GET_INVESTMENTS_OK, list)));
     }
 
     @PostMapping("/subscribe")
-    public Mono<ResponseEntity<ApiResponse<CustomerInvestmentDto>>> subscribe(
+    public Mono<ResponseEntity<ApiResponse<CustomerInvestmentResponse>>> subscribe(
             @AuthenticationPrincipal String username,
-            @RequestBody CustomerInvestmentDto request) {
+            @RequestBody CustomerInvestmentRequest request) {
         return customerInvestmentService.subscribe(username, request)
                 .map(dto -> ResponseEntity
                         .status(HttpStatus.CREATED)
-                        .body(new ApiResponse<>("Suscripción creada exitosamente", dto)));
+                        .body(new ApiResponse<>(ResponseMessages.SUBSCRIBE_OK, dto)));
     }
 
     @PutMapping("/unsubscribe/{id_customer_investment}")
-    public Mono<ResponseEntity<ApiResponse<CustomerInvestmentDto>>> unsubscribe(
+    public Mono<ResponseEntity<ApiResponse<CustomerInvestmentResponse>>> unsubscribe(
             @AuthenticationPrincipal String username,
             @PathVariable("id_customer_investment") String idCustomerInvestment) {
         return customerInvestmentService.unsubscribe(username, idCustomerInvestment)
                 .map(dto -> ResponseEntity
-                        .ok(new ApiResponse<>("Suscripción cancelada exitosamente", dto)));
+                        .ok(new ApiResponse<>(ResponseMessages.UNSUBSCRIBE_OK, dto)));
     }
 }

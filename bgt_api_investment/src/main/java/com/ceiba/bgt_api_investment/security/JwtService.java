@@ -2,6 +2,8 @@ package com.ceiba.bgt_api_investment.security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import com.ceiba.bgt_api_investment.exception.ErrorMessages;
+import com.ceiba.bgt_api_investment.exception.UnauthorizedException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,15 +27,20 @@ public class JwtService {
     }
 
     /**
-     * Extrae el username (subject) del token sin verificar expiración.
+     * Extrae el username (subject) del token.
+     * Lanza UnauthorizedException si el token es inválido o está expirado.
      */
     public String extractUsername(String token) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getSubject();
+        } catch (Exception e) {
+            throw new UnauthorizedException(ErrorMessages.INVALID_JWT_TOKEN, e);
+        }
     }
 
     /**

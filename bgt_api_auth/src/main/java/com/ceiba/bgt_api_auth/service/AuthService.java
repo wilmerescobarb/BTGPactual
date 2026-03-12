@@ -26,10 +26,7 @@ public class AuthService {
         return customerRepository.findByUsername(request.getUsername())
                 .switchIfEmpty(Mono.error(new RuntimeException("Usuario no encontrado: " + request.getUsername())))
                 .filter(customer -> {
-                    log.debug("Customer encontrado: {}", customer.getUsername());
-                    log.debug("passUser almacenado: {}", customer.getPassUser());
                     boolean matches = passwordEncoder.matches(request.getPassword(), customer.getPassUser());
-                    log.debug("¿Contraseña coincide? {}", matches);
                     return matches;
                 })
                 .switchIfEmpty(Mono.error(new RuntimeException("Contraseña incorrecta para: " + request.getUsername())))

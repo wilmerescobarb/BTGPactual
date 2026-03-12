@@ -17,4 +17,4 @@ jwt:
 
 logging:
   level:
-    com.ceiba.bgt_api_investment: DEBUG
+    com.ceiba.bgt_api_investment: INFO
