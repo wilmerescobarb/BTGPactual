@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: bgt_api_notification
+
+spring:
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+
+app:
+  mail:
+    from: test@example.com
+
+aws:
+  access-key: test-access-key
+  secret-key: test-secret-key
+  region: us-east-1

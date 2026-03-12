@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: bgt_api_notification
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: wilmer.escobar@ceiba.com.co
+    password: 'wgwj lknx raqc lgzv'
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+server:
+  port: 8083
+app:
+  mail:
+    from: wilmer.escobar@ceiba.com.co
+
+aws:
+  access-key: AKIASSCXNC26C2IZS3SZ
+  secret-key: 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
+  region: us-east-1
+
+logging:
+  level:
+    com.ceiba.bgt_api_notification: INFO
