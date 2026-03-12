@@ -4,10 +4,12 @@ import com.ceiba.bgt_api_auth.model.AuthResponse;
 import com.ceiba.bgt_api_auth.model.LoginRequest;
 import com.ceiba.bgt_api_auth.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -22,11 +24,15 @@ public class AuthService {
      */
     public Mono<AuthResponse> login(LoginRequest request) {
         return customerRepository.findByUsername(request.getUsername())
+                .switchIfEmpty(Mono.error(new RuntimeException("Usuario no encontrado: " + request.getUsername())))
                 .filter(customer -> {
-                    System.out.println(customer);
-                    return passwordEncoder.matches(request.getPassword(), customer.getPassUser());
+                    log.debug("Customer encontrado: {}", customer.getUsername());
+                    log.debug("passUser almacenado: {}", customer.getPassUser());
+                    boolean matches = passwordEncoder.matches(request.getPassword(), customer.getPassUser());
+                    log.debug("¿Contraseña coincide? {}", matches);
+                    return matches;
                 })
-                .switchIfEmpty(Mono.error(new RuntimeException("Credenciales inválidas")))
+                .switchIfEmpty(Mono.error(new RuntimeException("Contraseña incorrecta para: " + request.getUsername())))
                 .map(customer -> {
                     String token = jwtService.generateToken(customer.getUsername());
                     return AuthResponse.builder()

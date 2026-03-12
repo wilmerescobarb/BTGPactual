@@ -5,21 +5,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Column;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("customer")
+@Document(collection = "customer")
 public class Customer {
 
     @Id
-    private Long id;
+    @Field("_id")
+    private String id;
 
     private String names;
 
@@ -27,19 +27,23 @@ public class Customer {
 
     private LocalDate birthday;
 
-    @Column("document_type")
+    @Field("document_type")
     private String documentType;
 
-    @Column("document_number")
+    @Field("document_number")
     private String documentNumber;
+
+    private String cellphone;
+
+    private String email;
 
     private String username;
 
-    @Column("pass_user")
+    @Field("pass_user")
     private String passUser;
 
     private BigDecimal amount;
 
-    @Column("created_at")
+    @Field("created_at")
     private LocalDate createdAt;
 }
