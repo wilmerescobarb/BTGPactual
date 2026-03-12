@@ -4,12 +4,14 @@ import com.ceiba.bgt_api_investment.constant.ResponseMessages;
 import com.ceiba.bgt_api_investment.dto.ApiResponse;
 import com.ceiba.bgt_api_investment.dto.CustomerInvestmentRequest;
 import com.ceiba.bgt_api_investment.dto.CustomerInvestmentResponse;
+import com.ceiba.bgt_api_investment.dto.InvestmentDto;
 import com.ceiba.bgt_api_investment.dto.InvestmentSummaryDto;
 import com.ceiba.bgt_api_investment.service.CustomerInvestmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,9 +32,18 @@ import java.util.List;
 @RestController
 @RequestMapping("/investments")
 @RequiredArgsConstructor
+@CrossOrigin("*")
 public class InvestmentController {
 
     private final CustomerInvestmentService customerInvestmentService;
+
+    @GetMapping("/catalog")
+    public Mono<ResponseEntity<ApiResponse<List<InvestmentDto>>>> getCatalog() {
+        return customerInvestmentService.getCatalog()
+                .collectList()
+                .map(list -> ResponseEntity.ok(
+                        new ApiResponse<>(ResponseMessages.GET_CATALOG_OK, list)));
+    }
 
     @GetMapping
     public Mono<ResponseEntity<ApiResponse<List<InvestmentSummaryDto>>>> getInvestments(

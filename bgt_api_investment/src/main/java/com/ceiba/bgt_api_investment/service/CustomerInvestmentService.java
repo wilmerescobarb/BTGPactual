@@ -2,6 +2,7 @@ package com.ceiba.bgt_api_investment.service;
 
 import com.ceiba.bgt_api_investment.dto.CustomerInvestmentRequest;
 import com.ceiba.bgt_api_investment.dto.CustomerInvestmentResponse;
+import com.ceiba.bgt_api_investment.dto.InvestmentDto;
 import com.ceiba.bgt_api_investment.dto.InvestmentSummaryDto;
 import com.ceiba.bgt_api_investment.exception.BusinessException;
 import com.ceiba.bgt_api_investment.exception.ErrorMessages;
@@ -53,6 +54,11 @@ public class CustomerInvestmentService {
      * Obtiene las inversiones del cliente buscando sus CustomerInvestments
      * y enriqueciendo con el nombre del fondo (sin JOIN, approach MongoDB).
      */
+    public Flux<InvestmentDto> getCatalog() {
+        return investmentRepository.findAll()
+                .map(InvestmentDto::from);
+    }
+
     public Flux<InvestmentSummaryDto> getInvestments(String username) {
         return customerRepository.findByUsername(username)
                 .switchIfEmpty(Mono.error(new IllegalArgumentException(
