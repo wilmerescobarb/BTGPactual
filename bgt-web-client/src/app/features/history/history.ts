@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { InvestmentService } from '../../core/services/investment.service';
+import { CustomerService } from '../../core/services/customer.service';
 import { InvestmentSummaryDto } from '../../core/models/investment.models';
 
 @Component({
@@ -12,6 +13,7 @@ import { InvestmentSummaryDto } from '../../core/models/investment.models';
 })
 export class HistoryComponent implements OnInit {
   private readonly investmentService = inject(InvestmentService);
+  private readonly customerService = inject(CustomerService);
 
   investments = signal<InvestmentSummaryDto[]>([]);
   loading = signal(true);
@@ -97,6 +99,7 @@ export class HistoryComponent implements OnInit {
       next: (res) => {
         this.unsubscribingId.set(null);
         this.successMsg.set(res.message || '¡Suscripción cancelada exitosamente!');
+        this.customerService.refreshCustomer();
         this.loadHistory();
       },
       error: (err: unknown) => {

@@ -9,3 +9,23 @@ export interface AuthResponse {
   expiresIn: number;
   username: string;
 }
+
+export interface CustomerDto {
+  id: string;
+  username: string;
+  amount: number;
+  names: string;
+  lastnames: string;
+}
+
+export interface RegisterRequest {
+  names: string;
+  lastnames: string;
+  birthday: string;
+  documentType: string;
+  documentNumber: string;
+  cellphone: string;
+  email: string;
+  username: string;
+  passUser: string;
+}

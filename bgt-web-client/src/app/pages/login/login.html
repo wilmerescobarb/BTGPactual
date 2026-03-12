@@ -1,54 +1,153 @@
 <div class="login-wrapper">
-  <div class="login-card">
+  <div class="login-card" [class.login-card--wide]="isRegisterView()">
+
+    <!-- Header -->
     <div class="login-header">
       <div class="logo">
         <span class="logo-icon">📈</span>
         <span class="logo-text">BTG Pactual</span>
       </div>
-      <h2>Iniciar Sesión</h2>
-      <p>Bienvenido al portal de inversiones</p>
+      @if (!isRegisterView()) {
+        <h2>Iniciar Sesión</h2>
+        <p>Bienvenido al portal de inversiones</p>
+      } @else {
+        <h2>Registrarse</h2>
+        <p>Crea tu cuenta para empezar a invertir</p>
+      }
     </div>
 
-    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" class="login-form">
-      <div class="form-group">
-        <label for="username">Usuario</label>
-        <input
-          id="username"
-          type="text"
-          [(ngModel)]="username"
-          name="username"
-          placeholder="Ingresa tu usuario"
-          required
-          autocomplete="username"
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input
-          id="password"
-          type="password"
-          [(ngModel)]="password"
-          name="password"
-          placeholder="Ingresa tu contraseña"
-          required
-          autocomplete="current-password"
-        />
-      </div>
-
-      @if (errorMsg()) {
-        <div class="alert alert-error">
-          {{ errorMsg() }}
+    <!-- ── LOGIN FORM ── -->
+    @if (!isRegisterView()) {
+      <form (ngSubmit)="onLogin()" #loginForm="ngForm" class="login-form">
+        <div class="form-group">
+          <label for="username">Usuario</label>
+          <input
+            id="username"
+            type="text"
+            [(ngModel)]="username"
+            name="username"
+            placeholder="Ingresa tu usuario"
+            required
+            autocomplete="username"
+          />
         </div>
-      }
 
-      <button type="submit" class="btn btn-primary btn-full" [disabled]="loading()">
-        @if (loading()) {
-          <span class="spinner"></span> Autenticando...
-        } @else {
-          Ingresar
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input
+            id="password"
+            type="password"
+            [(ngModel)]="password"
+            name="password"
+            placeholder="Ingresa tu contraseña"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+
+        @if (loginError()) {
+          <div class="alert alert-error">{{ loginError() }}</div>
         }
-      </button>
-    </form>
+
+        <button type="submit" class="btn btn-primary btn-full" [disabled]="loginLoading()">
+          @if (loginLoading()) {
+            <span class="spinner"></span> Autenticando...
+          } @else {
+            Ingresar
+          }
+        </button>
+
+        <p class="toggle-link">
+          ¿No tienes cuenta?
+          <button type="button" class="link-btn" (click)="showRegister()">Regístrate aquí</button>
+        </p>
+      </form>
+    }
+
+    <!-- ── REGISTER FORM ── -->
+    @if (isRegisterView()) {
+      <form (ngSubmit)="onRegister()" #regForm="ngForm" class="login-form">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-names">Nombres</label>
+            <input id="reg-names" type="text" [(ngModel)]="reg.names" name="names"
+              placeholder="Ej. Alexander" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-lastnames">Apellidos</label>
+            <input id="reg-lastnames" type="text" [(ngModel)]="reg.lastnames" name="lastnames"
+              placeholder="Ej. Escobar" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-doctype">Tipo de documento</label>
+            <select id="reg-doctype" [(ngModel)]="reg.documentType" name="documentType" required>
+              <option value="CC">CC – Cédula de Ciudadanía</option>
+              <option value="CE">CE – Cédula de Extranjería</option>
+              <option value="PA">PA – Pasaporte</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="reg-docnum">Número de documento</label>
+            <input id="reg-docnum" type="text" [(ngModel)]="reg.documentNumber" name="documentNumber"
+              placeholder="Ej. 10853022" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="reg-birthday">Fecha de nacimiento</label>
+            <input id="reg-birthday" type="date" [(ngModel)]="reg.birthday" name="birthday" required />
+          </div>
+          <div class="form-group">
+            <label for="reg-cellphone">Celular</label>
+            <input id="reg-cellphone" type="tel" [(ngModel)]="reg.cellphone" name="cellphone"
+              placeholder="Ej. +573122423574" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email">Correo electrónico</label>
+          <input id="reg-email" type="email" [(ngModel)]="reg.email" name="email"
+            placeholder="Ej. usuario@correo.com" required />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-username">Usuario</label>
+          <input id="reg-username" type="text" [(ngModel)]="reg.username" name="username"
+            placeholder="Nombre de usuario único" required autocomplete="username" />
+        </div>
+
+        <div class="form-group">
+          <label for="reg-pass">Contraseña</label>
+          <input id="reg-pass" type="password" [(ngModel)]="reg.passUser" name="passUser"
+            placeholder="Crea una contraseña" required autocomplete="new-password" />
+        </div>
+
+        @if (registerError()) {
+          <div class="alert alert-error">{{ registerError() }}</div>
+        }
+        @if (registerSuccess()) {
+          <div class="alert alert-success">{{ registerSuccess() }}</div>
+        }
+
+        <button type="submit" class="btn btn-primary btn-full" [disabled]="registerLoading()">
+          @if (registerLoading()) {
+            <span class="spinner"></span> Registrando...
+          } @else {
+            Crear cuenta
+          }
+        </button>
+
+        <p class="toggle-link">
+          ¿Ya tienes cuenta?
+          <button type="button" class="link-btn" (click)="showLogin()">Inicia sesión</button>
+        </p>
+      </form>
+    }
+
   </div>
 </div>

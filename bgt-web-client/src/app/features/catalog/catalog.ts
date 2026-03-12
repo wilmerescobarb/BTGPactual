@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { InvestmentService } from '../../core/services/investment.service';
+import { CustomerService } from '../../core/services/customer.service';
 import { InvestmentDto, CustomerInvestmentRequest } from '../../core/models/investment.models';
 
 @Component({
@@ -13,6 +14,7 @@ import { InvestmentDto, CustomerInvestmentRequest } from '../../core/models/inve
 })
 export class CatalogComponent implements OnInit {
   private readonly investmentService = inject(InvestmentService);
+  private readonly customerService = inject(CustomerService);
 
   investments = signal<InvestmentDto[]>([]);
   loading = signal(true);
@@ -86,6 +88,7 @@ export class CatalogComponent implements OnInit {
       next: (res) => {
         this.subscribing.set(false);
         this.subscribeSuccess.set(res.message || '¡Suscripción creada exitosamente!');
+        this.customerService.refreshCustomer();
       },
       error: (err: unknown) => {
         this.subscribing.set(false);
