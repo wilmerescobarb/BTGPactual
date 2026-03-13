@@ -4,8 +4,7 @@ spring:
 
   data:
     mongodb:
-      host: localhost
-      port: 27017
+      uri: ${SPRING_MONGODB_URI:${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017}}
       database: bgt_db
 
 server:
@@ -13,10 +12,10 @@ server:
 
 jwt:
   # Clave secreta para firmar JWTs (mínimo 32 caracteres para HS256)
-  secret: bgt-super-secret-key-for-jwt-signing-2026
+  secret: ${JWT_SECRET:bgt-super-secret-key-for-jwt-signing-2026}
   # Tiempo de expiración del token en milisegundos (1 hora = 3600000)
   expiration-ms: 3600000
 
 logging:
   level:
-    com.ceiba.bgt_api_auth: DEBUG
+    com.ceiba.bgt_api_auth: INFO

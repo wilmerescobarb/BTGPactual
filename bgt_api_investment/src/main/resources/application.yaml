@@ -4,8 +4,7 @@ spring:
 
   data:
     mongodb:
-      host: localhost
-      port: 27017
+      uri: ${SPRING_MONGODB_URI:${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017}}
       database: bgt_db
 
 server:
@@ -13,11 +12,11 @@ server:
 
 jwt:
   # Debe coincidir exactamente con el secret de bgt_api_auth
-  secret: bgt-super-secret-key-for-jwt-signing-2026
+  secret: ${JWT_SECRET:bgt-super-secret-key-for-jwt-signing-2026}
 
 notification:
   service:
-    url: http://localhost:8083
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
 
 logging:
   level:

@@ -1,0 +1,119 @@
+services:
+
+  # ── Base de datos ────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: bgt_mongodb
+    restart: unless-stopped
+    volumes:
+      - mongodb_data:/data/db
+      - ./bgt_database/NoSQL:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - bgt_network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Microservicio Auth ────────────────────────────────────────────────────────
+  bgt_api_auth:
+    image: ${DOCKERHUB_USERNAME}/bgt-api-auth:latest
+    container_name: bgt_api_auth
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - bgt_network
+
+  # ── Microservicio Notification ────────────────────────────────────────────────
+  bgt_api_notification:
+    image: ${DOCKERHUB_USERNAME}/bgt-api-notification:latest
+    container_name: bgt_api_notification
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_MAIL_USERNAME=${MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${MAIL_PASSWORD}
+      - GOOGLE_EMAIL=${MAIL_USERNAME}
+      - GOOGLE_PASSWORD=${MAIL_PASSWORD}
+      - APP_MAIL_FROM=${MAIL_USERNAME}
+      - AWS_ACCESS_KEY=${AWS_ACCESS_KEY}
+      - AWS_SECRET_KEY=${AWS_SECRET_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - JWT_SECRET=${JWT_SECRET}
+    networks:
+      bgt_network:
+        aliases:
+          - bgt-api-notification
+
+  # ── Microservicio Investment ───────────────────────────────────────────────────
+  bgt_api_investment:
+    image: ${DOCKERHUB_USERNAME}/bgt-api-investment:latest
+    container_name: bgt_api_investment
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+      - NOTIFICATION_SERVICE_URL=http://bgt-api-notification:8083
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      bgt_api_notification:
+        condition: service_started
+    networks:
+      - bgt_network
+
+  # ── Microservicio Customer ─────────────────────────────────────────────────────
+  bgt_api_customer:
+    image: ${DOCKERHUB_USERNAME}/bgt-api-customer:latest
+    container_name: bgt_api_customer
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+      - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - bgt_network
+
+  # ── Microfrontend Angular ─────────────────────────────────────────────────────
+  bgt_web_client:
+    image: ${DOCKERHUB_USERNAME}/bgt-web-client:latest
+    container_name: bgt_web_client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - bgt_api_auth
+      - bgt_api_investment
+      - bgt_api_customer
+    networks:
+      - bgt_network
+
+# ── Volúmenes ────────────────────────────────────────────────────────────────
+volumes:
+  mongodb_data:
+
+# ── Red interna ───────────────────────────────────────────────────────────────
+networks:
+  bgt_network:
+    driver: bridge
