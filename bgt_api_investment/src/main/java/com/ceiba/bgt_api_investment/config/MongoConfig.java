@@ -19,7 +19,7 @@ import java.util.List;
 @Configuration
 public class MongoConfig {
 
-    @Value("${spring.data.mongodb.database:bgt_db}")
+    @Value("${spring.mongodb.database:${spring.data.mongodb.database:bgt_db}}")
     private String databaseName;
 
     @Bean
