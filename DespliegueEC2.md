@@ -84,5 +84,6 @@ docker push wilmerescobar/bgt-api-auth:latest
 docker push wilmerescobar/bgt-api-investment:latest
 docker push wilmerescobar/bgt-api-notification:latest
 docker push wilmerescobar/bgt-api-customer:latest
+wilmerescobar/bgt-web-client:latest
 
 docker compose up -d --pull always

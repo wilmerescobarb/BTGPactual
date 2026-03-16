@@ -9,7 +9,8 @@ COPY gradle/ gradle/
 COPY build.gradle .
 COPY settings.gradle .
 
-RUN chmod +x ./gradlew
+# Elimina posibles line endings CRLF (Windows) que rompen el shebang en Linux
+RUN sed -i 's/\r$//' ./gradlew && chmod +x ./gradlew
 # Descarga dependencias (capa cacheable)
 RUN ./gradlew dependencies --no-daemon -q
 

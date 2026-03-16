@@ -15,30 +15,9 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: KeyPair para SSH
 
-  AuthImage:
-    Type: String
-    Description: Imagen Docker del servicio auth
-
-  CustomerImage:
-    Type: String
-    Description: Imagen Docker del servicio customer
-
-  InvestmentImage:
-    Type: String
-    Description: Imagen Docker del servicio investment
-
-  NotificationImage:
-    Type: String
-    Description: Imagen Docker del servicio notification
-
-  FrontendImage:
-    Type: String
-    Description: Imagen Docker del frontend
-
   DockerHubUsername:
     Type: String
-    Default: ""
-    Description: Usuario Docker Hub (opcional)
+    Description: Usuario Docker Hub (ej wilmerescobar)
 
   DockerHubPassword:
     Type: String
@@ -107,6 +86,11 @@ Resources:
           ToPort: 22
           CidrIp: !Ref SshCidr
 
+        - IpProtocol: tcp
+          FromPort: 8081
+          ToPort: 8084
+          CidrIp: 0.0.0.0/0
+
   EC2Instance:
     Type: AWS::EC2::Instance
     Properties:
@@ -154,8 +138,14 @@ Resources:
             echo "${DockerHubPassword}" | docker login -u "${DockerHubUsername}" --password-stdin
           fi
 
-          mkdir -p /home/ubuntu/app
+          mkdir -p /home/ubuntu/app/db-init
           cd /home/ubuntu/app
+
+          # Descargar scripts de inicialización de MongoDB desde GitHub
+          curl -fsSL https://raw.githubusercontent.com/wilmerescobarb/BTGPactual/refs/heads/develop/bgt_database/NoSQL/01_create_collections.js \
+            -o /home/ubuntu/app/db-init/01_create_collections.js
+          curl -fsSL https://raw.githubusercontent.com/wilmerescobarb/BTGPactual/refs/heads/develop/bgt_database/NoSQL/02_insert_investment.js \
+            -o /home/ubuntu/app/db-init/02_insert_investment.js
 
           # Crear docker-compose.yml dinámico
           cat <<EOF > docker-compose.yml
@@ -167,6 +157,7 @@ Resources:
               restart: unless-stopped
               volumes:
                 - mongodb_data:/data/db
+                - /home/ubuntu/app/db-init:/docker-entrypoint-initdb.d:ro
               healthcheck:
                 test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
                 interval: 10s
@@ -177,14 +168,14 @@ Resources:
                 - bgt_network
 
             auth:
-              image: ${AuthImage}
+              image: ${DockerHubUsername}/bgt-api-auth:latest
               container_name: bgt_api_auth
               ports:
                 - "8081:8081"
               restart: unless-stopped
               environment:
-                - SPRING_MONGODB_URI=mongodb://mongodb:27017/bgt_db
-                - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+                - SPRING_MONGODB_URI=mongodb://mongodb:27017
+                - SPRING_MONGODB_DATABASE=bgt_db
                 - JWT_SECRET=${JwtSecret}
               depends_on:
                 mongodb:
@@ -193,14 +184,14 @@ Resources:
                 - bgt_network
 
             customer:
-              image: ${CustomerImage}
+              image: ${DockerHubUsername}/bgt-api-customer:latest
               container_name: bgt_api_customer
               ports:
                 - "8084:8084"
               restart: unless-stopped
               environment:
-                - SPRING_MONGODB_URI=mongodb://mongodb:27017/bgt_db
-                - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+                - SPRING_MONGODB_URI=mongodb://mongodb:27017
+                - SPRING_MONGODB_DATABASE=bgt_db
                 - JWT_SECRET=${JwtSecret}
               depends_on:
                 mongodb:
@@ -209,14 +200,14 @@ Resources:
                 - bgt_network
 
             investment:
-              image: ${InvestmentImage}
+              image: ${DockerHubUsername}/bgt-api-investment:latest
               container_name: bgt_api_investment
               ports:
                 - "8082:8082"
               restart: unless-stopped
               environment:
-                - SPRING_MONGODB_URI=mongodb://mongodb:27017/bgt_db
-                - SPRING_DATA_MONGODB_URI=mongodb://mongodb:27017/bgt_db
+                - SPRING_MONGODB_URI=mongodb://mongodb:27017
+                - SPRING_MONGODB_DATABASE=bgt_db
                 - NOTIFICATION_SERVICE_URL=http://bgt-api-notification:8083
                 - JWT_SECRET=${JwtSecret}
               depends_on:
@@ -228,7 +219,7 @@ Resources:
                 - bgt_network
 
             notification:
-              image: ${NotificationImage}
+              image: ${DockerHubUsername}/bgt-api-notification:latest
               container_name: bgt_api_notification
               ports:
                 - "8083:8083"
@@ -249,7 +240,7 @@ Resources:
                     - bgt-api-notification
 
             frontend:
-              image: ${FrontendImage}
+              image: ${DockerHubUsername}/bgt-web-client:latest
               container_name: bgt_web_client
               ports:
                 - "80:80"
