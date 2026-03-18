@@ -1,0 +1,277 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EC2 + Docker Compose deploy using prebuilt images (Docker Hub/ECR)
+
+Parameters:
+
+  InstanceType:
+    Type: String
+    Default: m7i-flex.large
+    AllowedValues:
+      - m7i-flex.large
+      - m7i-flex.xlarge
+      - m7i-flex.2xlarge
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: KeyPair para SSH
+
+  DockerHubUsername:
+    Type: String
+    Description: Usuario Docker Hub (ej wilmerescobar)
+
+  DockerHubPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Password o token Docker Hub (opcional)
+
+  JwtSecret:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+    Description: Secreto JWT compartido por todos los microservicios (min 32 chars)
+
+  MailUsername:
+    Type: String
+    Default: ""
+    Description: Usuario SMTP/Gmail (opcional, para notification)
+
+  MailPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Password SMTP/Gmail (opcional, para notification)
+
+  AwsAccessKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: AWS access key (opcional, para SNS)
+
+  AwsSecretKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: AWS secret key (opcional, para SNS)
+
+  AwsRegion:
+    Type: String
+    Default: us-east-1
+    Description: Region AWS para SNS
+
+  SshCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: CIDR permitido para SSH (recomendado restringir)
+
+Resources:
+
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Permitir HTTP, HTTPS y SSH
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SshCidr
+
+        - IpProtocol: tcp
+          FromPort: 8081
+          ToPort: 8084
+          CidrIp: 0.0.0.0/0
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+
+      ImageId: ami-0b6c6ebed2801a5cb
+
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+
+      Tags:
+        - Key: Name
+          Value: BTG-Docker-Server
+
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -xe
+
+          # Registrar salida de UserData para diagnostico en la instancia
+          exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+          echo "[UserData] Inicio: $(date -Is)"
+
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get upgrade -y
+
+          # Instalar Docker desde el repositorio oficial en Ubuntu
+          apt-get install -y ca-certificates curl
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+          chmod a+r /etc/apt/keyrings/docker.asc
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable" \
+            | tee /etc/apt/sources.list.d/docker.list > /dev/null
+          apt-get update -y
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          systemctl start docker
+          systemctl enable docker
+          usermod -aG docker ubuntu
+
+          # Login opcional a Docker Hub
+          if [ -n "${DockerHubUsername}" ] && [ -n "${DockerHubPassword}" ]; then
+            echo "${DockerHubPassword}" | docker login -u "${DockerHubUsername}" --password-stdin
+          fi
+
+          mkdir -p /home/ubuntu/app/db-init
+          cd /home/ubuntu/app
+
+          # Descargar scripts de inicialización de MongoDB desde GitHub
+          curl -fsSL https://raw.githubusercontent.com/wilmerescobarb/BTGPactual/refs/heads/develop/bgt_database/NoSQL/01_create_collections.js \
+            -o /home/ubuntu/app/db-init/01_create_collections.js
+          curl -fsSL https://raw.githubusercontent.com/wilmerescobarb/BTGPactual/refs/heads/develop/bgt_database/NoSQL/02_insert_investment.js \
+            -o /home/ubuntu/app/db-init/02_insert_investment.js
+
+          # Crear docker-compose.yml dinámico
+          cat <<EOF > docker-compose.yml
+          services:
+
+            mongodb:
+              image: mongo:7
+              container_name: bgt_mongodb
+              restart: unless-stopped
+              volumes:
+                - mongodb_data:/data/db
+                - /home/ubuntu/app/db-init:/docker-entrypoint-initdb.d:ro
+              healthcheck:
+                test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+                start_period: 15s
+              networks:
+                - bgt_network
+
+            auth:
+              image: ${DockerHubUsername}/bgt-api-auth:latest
+              container_name: bgt_api_auth
+              ports:
+                - "8081:8081"
+              restart: unless-stopped
+              environment:
+                - SPRING_MONGODB_URI=mongodb://mongodb:27017
+                - SPRING_MONGODB_DATABASE=bgt_db
+                - JWT_SECRET=${JwtSecret}
+              depends_on:
+                mongodb:
+                  condition: service_healthy
+              networks:
+                - bgt_network
+
+            customer:
+              image: ${DockerHubUsername}/bgt-api-customer:latest
+              container_name: bgt_api_customer
+              ports:
+                - "8084:8084"
+              restart: unless-stopped
+              environment:
+                - SPRING_MONGODB_URI=mongodb://mongodb:27017
+                - SPRING_MONGODB_DATABASE=bgt_db
+                - JWT_SECRET=${JwtSecret}
+              depends_on:
+                mongodb:
+                  condition: service_healthy
+              networks:
+                - bgt_network
+
+            investment:
+              image: ${DockerHubUsername}/bgt-api-investment:latest
+              container_name: bgt_api_investment
+              ports:
+                - "8082:8082"
+              restart: unless-stopped
+              environment:
+                - SPRING_MONGODB_URI=mongodb://mongodb:27017
+                - SPRING_MONGODB_DATABASE=bgt_db
+                - NOTIFICATION_SERVICE_URL=http://bgt-api-notification:8083
+                - JWT_SECRET=${JwtSecret}
+              depends_on:
+                mongodb:
+                  condition: service_healthy
+                notification:
+                  condition: service_started
+              networks:
+                - bgt_network
+
+            notification:
+              image: ${DockerHubUsername}/bgt-api-notification:latest
+              container_name: bgt_api_notification
+              ports:
+                - "8083:8083"
+              restart: unless-stopped
+              environment:
+                - SPRING_MAIL_USERNAME=${MailUsername}
+                - SPRING_MAIL_PASSWORD=${MailPassword}
+                - GOOGLE_EMAIL=${MailUsername}
+                - GOOGLE_PASSWORD=${MailPassword}
+                - APP_MAIL_FROM=${MailUsername}
+                - AWS_ACCESS_KEY=${AwsAccessKey}
+                - AWS_SECRET_KEY=${AwsSecretKey}
+                - AWS_REGION=${AwsRegion}
+                - JWT_SECRET=${JwtSecret}
+              networks:
+                bgt_network:
+                  aliases:
+                    - bgt-api-notification
+
+            frontend:
+              image: ${DockerHubUsername}/bgt-web-client:latest
+              container_name: bgt_web_client
+              ports:
+                - "80:80"
+              restart: unless-stopped
+              depends_on:
+                - auth
+                - investment
+                - customer
+              networks:
+                - bgt_network
+
+          volumes:
+            mongodb_data:
+
+          networks:
+            bgt_network:
+              driver: bridge
+          EOF
+
+          chown -R ubuntu:ubuntu /home/ubuntu/app
+
+          docker compose up -d
+          touch /var/log/user-data.completed
+          echo "[UserData] Fin: $(date -Is)"
+
+Outputs:
+
+  PublicIP:
+    Description: IP pública de la instancia
+    Value: !GetAtt EC2Instance.PublicIp
+
+  PublicDNS:
+    Description: DNS público de la instancia
+    Value: !GetAtt EC2Instance.PublicDnsName

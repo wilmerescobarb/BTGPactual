@@ -4,8 +4,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: wilmer.escobar@ceiba.com.co
-    password: 'wgwj lknx raqc lgzv'
+    username: ${GOOGLE_EMAIL:}
+    password: ${GOOGLE_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -16,16 +16,16 @@ server:
   port: 8083
 app:
   mail:
-    from: wilmer.escobar@ceiba.com.co
+    from: ${SPRING_MAIL_USERNAME:wilmer.escobar@ceiba.com.co}
 
 aws:
-  access-key: AKIASSCXNC26C2IZS3SZ
-  secret-key: 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
-  region: us-east-1
+  access-key: ${AWS_ACCESS_KEY:}
+  secret-key: ${AWS_SECRET_KEY:}
+  region: ${AWS_REGION:us-east-1}
 
 jwt:
   # Debe coincidir exactamente con el secret de bgt_api_auth
-  secret: bgt-super-secret-key-for-jwt-signing-2026
+  secret: ${JWT_SECRET:bgt-super-secret-key-for-jwt-signing-2026}
 
 logging:
   level:

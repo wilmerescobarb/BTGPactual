@@ -2,18 +2,16 @@ spring:
   application:
     name: bgt_api_customer
 
-  data:
-    mongodb:
-      host: localhost
-      port: 27017
-      database: bgt_db
+  mongodb:
+    uri: ${SPRING_MONGODB_URI}
+    database: ${SPRING_MONGODB_DATABASE}
 
 server:
   port: 8084
 
 jwt:
   # Debe coincidir exactamente con el secret de bgt_api_auth
-  secret: bgt-super-secret-key-for-jwt-signing-2026
+  secret: ${JWT_SECRET:bgt-super-secret-key-for-jwt-signing-2026}
 
 logging:
   level:
